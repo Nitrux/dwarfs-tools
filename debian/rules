@@ -6,4 +6,10 @@ export DH_VERBOSE = 1
 	dh $@ --buildsystem=none
 
 override_dh_auto_install:
-	install -D -m 0755 .upstream-bin/dwarfs-universal debian/tmp/usr/lib/dwarfs-tools/dwarfs-universal
+	install -D -m 0755 .upstream-bin/dwarfs-universal debian/dwarfs-tools/usr/lib/dwarfs-tools/dwarfs-universal
+	install -D -m 0755 debian/wrappers/dwarfs debian/dwarfs-tools/usr/bin/dwarfs
+	install -D -m 0755 debian/wrappers/dwarfsck debian/dwarfs-tools/usr/bin/dwarfsck
+	install -D -m 0755 debian/wrappers/dwarfsextract debian/dwarfs-tools/usr/bin/dwarfsextract
+	install -D -m 0755 debian/wrappers/mkdwarfs debian/dwarfs-tools/usr/bin/mkdwarfs
+
+override_dh_install:

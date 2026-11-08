@@ -1,3 +1,9 @@
+dwarfs-tools (0.15.8-2) unstable; urgency=medium
+
+  * Dispatch the universal binary through command wrappers.
+
+ -- Uri Herrera <uri_herrera@nxos.org>  Sun, 08 Nov 2026 14:39:54 -0600
+
 dwarfs-tools (0.15.8-1) unstable; urgency=medium
 
   * Package the DwarFS image inspection and extraction tools.

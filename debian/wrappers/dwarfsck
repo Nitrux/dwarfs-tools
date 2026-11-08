@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright 2026 <Nitrux Latinoamericana S.C. <hello@nxos.org>>
+
+# -- Exit on errors.
+
+set -eu
+
+
+# -- Launch the DwarFS tool.
+
+exec /usr/lib/dwarfs-tools/dwarfs-universal --tool=dwarfsck "$@"

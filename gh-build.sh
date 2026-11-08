@@ -103,11 +103,14 @@ cp --recursive "$repo_root/debian" "$source_dir/debian"
 cd "$source_dir"
 
 ### Set the package version
-expected_version="${version}-1"
 current_version="$(dpkg-parsechangelog --show-field Version)"
-if [[ "$current_version" != "$expected_version" ]]; then
+current_upstream_version="${current_version%-*}"
+if [[ "$current_upstream_version" != "$version" ]]; then
+    expected_version="${version}-1"
     dch --newversion "$expected_version" --distribution unstable --force-bad-version --maintmaint \
         "New upstream version $version."
+else
+    expected_version="$current_version"
 fi
 
 ### Install Dependencies
