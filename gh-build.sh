@@ -23,50 +23,82 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-if [[ "$architecture" != "amd64" && "$architecture" != "arm64" ]]; then
-    echo "Unsupported package architecture: $architecture" >&2
-    exit 1
-fi
+case "$architecture" in
+    amd64)
+        upstream_arch="x86_64"
+        ;;
+    arm64)
+        upstream_arch="aarch64"
+        ;;
+    *)
+        echo "Unsupported package architecture: $architecture" >&2
+        exit 1
+        ;;
+esac
 
-echo "Building DwarFS $version for $architecture"
+echo "Packaging DwarFS $version universal binary for $architecture"
 
 ### Basic Packages
 apt -qq update
 apt -qq -yy install ca-certificates curl devscripts equivs jq lintian xz-utils --no-install-recommends
 
-### Get the upstream source archive checksum
-source_sha256=""
-if [[ "$version" == "0.15.8" ]]; then
+### Get the upstream asset checksums
+release_info="$(curl --fail --location --silent --show-error \
+    "https://api.github.com/repos/mhx/dwarfs/releases/tags/v${version}")"
+universal_asset="dwarfs-universal-${version}-Linux-${upstream_arch}"
+source_asset="dwarfs-${version}.tar.xz"
+
+if [[ "$version" == "0.15.8" && "$upstream_arch" == "x86_64" ]]; then
+    universal_sha256="0ed66df82f9bb6671c1f898404ff4d57c263460078d46dbac8efb9d8eec271b7"
+    source_sha256="a2382a2d06f4539b1c53b8b4f800776945e2f13f71c0a3226d3bab3e1b25fe04"
+elif [[ "$version" == "0.15.8" && "$upstream_arch" == "aarch64" ]]; then
+    universal_sha256="f21cbc33840bbffe410c7043fab85e0d1b4eee86d77bcc0fbf3a51b94fc4b222"
     source_sha256="a2382a2d06f4539b1c53b8b4f800776945e2f13f71c0a3226d3bab3e1b25fe04"
 else
-    release_info="$(curl --fail --location --silent --show-error \
-        "https://api.github.com/repos/mhx/dwarfs/releases/tags/v${version}")"
-    asset_name="dwarfs-${version}.tar.xz"
-    asset_digest="$(jq --exit-status --raw-output --arg name "$asset_name" \
+    universal_digest="$(jq --exit-status --raw-output --arg name "$universal_asset" \
         '.assets[] | select(.name == $name) | .digest // empty' <<< "$release_info")"
-    if [[ "$asset_digest" =~ ^sha256:([[:xdigit:]]{64})$ ]]; then
+    source_digest="$(jq --exit-status --raw-output --arg name "$source_asset" \
+        '.assets[] | select(.name == $name) | .digest // empty' <<< "$release_info")"
+    if [[ "$universal_digest" =~ ^sha256:([[:xdigit:]]{64})$ ]]; then
+        universal_sha256="${BASH_REMATCH[1]}"
+    else
+        echo "Upstream release is missing the universal binary SHA-256 digest." >&2
+        exit 1
+    fi
+    if [[ "$source_digest" =~ ^sha256:([[:xdigit:]]{64})$ ]]; then
         source_sha256="${BASH_REMATCH[1]}"
     else
-        echo "No SHA-256 digest published for upstream source archive $asset_name." >&2
+        echo "Upstream release is missing the source archive SHA-256 digest." >&2
         exit 1
     fi
 fi
 
-### Download and verify the source
+### Download and verify the upstream universal binary and license files
 work_dir="$(mktemp -d)"
 trap 'rm -rf "$work_dir"' EXIT
-archive="${work_dir}/dwarfs-${version}.tar.xz"
 source_dir="${work_dir}/source"
-archive_url="${upstream_url}/releases/download/v${version}/dwarfs-${version}.tar.xz"
+universal_binary="${work_dir}/dwarfs-universal"
+source_archive="${work_dir}/${source_asset}"
 
-curl --fail --location --retry 3 --output "$archive" "$archive_url"
-echo "$source_sha256  $archive" | sha256sum --check --status || {
-    echo "SHA-256 verification failed for $archive_url" >&2
+curl --fail --location --retry 3 \
+    --output "$universal_binary" \
+    "${upstream_url}/releases/download/v${version}/${universal_asset}"
+curl --fail --location --retry 3 \
+    --output "$source_archive" \
+    "${upstream_url}/releases/download/v${version}/${source_asset}"
+echo "$universal_sha256  $universal_binary" | sha256sum --check --status || {
+    echo "SHA-256 verification failed for $universal_asset" >&2
+    exit 1
+}
+echo "$source_sha256  $source_archive" | sha256sum --check --status || {
+    echo "SHA-256 verification failed for $source_asset" >&2
     exit 1
 }
 
 mkdir -p "$source_dir"
-tar --extract --xz --file "$archive" --directory "$source_dir" --strip-components=1
+tar --extract --xz --file "$source_archive" --directory "$source_dir" --strip-components=1
+mkdir -p "$source_dir/.upstream-bin"
+install --mode=0755 "$universal_binary" "$source_dir/.upstream-bin/dwarfs-universal"
 cp --recursive "$repo_root/debian" "$source_dir/debian"
 cd "$source_dir"
 

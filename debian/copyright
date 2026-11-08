@@ -5,12 +5,13 @@ Source: https://github.com/mhx/dwarfs
 
 Files: *
 Copyright: Marcus Holland-Moritz and DwarFS contributors
-License: see upstream SPDX identifiers and LICENSES/
- The license varies by source file. DwarFS source files carry SPDX license
- identifiers, and the corresponding license texts are provided in LICENSE and
- LICENSES/. This binary package includes only the read-only tools dwarfsck and
- dwarfsextract; upstream identifies code used to read DwarFS images as MIT
- licensed. The writer tools are not included.
+License: GPL-3.0-or-later
+ The package contains the upstream universal executable with both DwarFS
+ reader and writer tools. The upstream project also includes MIT-licensed
+ reader components; preserve their notices in LICENSE and LICENSES/.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 3 can be found in /usr/share/common-licenses/GPL-3.
 
 Files: debian/*
 Copyright: 2026 Nitrux Latinoamericana S.C.

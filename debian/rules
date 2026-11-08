@@ -1,13 +1,12 @@
 #!/usr/bin/make -f
 
 export DH_VERBOSE = 1
-export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 %:
-	dh $@ --buildsystem=cmake --builddirectory=build
-
-override_dh_auto_configure:
-	dh_auto_configure -- -DWITH_FUSE_DRIVER=OFF -DWITH_DESKTOP_INTEGRATION=OFF -DWITH_MAN_PAGES=OFF -DWITH_TESTS=OFF
+	dh $@ --buildsystem=none
 
 override_dh_auto_install:
-	dh_auto_install --destdir=debian/tmp
+	install -D -m 0755 .upstream-bin/dwarfs-universal debian/tmp/usr/lib/dwarfs-tools/dwarfs-universal
+	install -d debian/tmp/usr/bin
+	ln -s ../lib/dwarfs-tools/dwarfs-universal debian/tmp/usr/bin/dwarfsck
+	ln -s ../lib/dwarfs-tools/dwarfs-universal debian/tmp/usr/bin/dwarfsextract
