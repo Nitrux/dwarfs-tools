@@ -1,0 +1,5 @@
+dwarfs-tools (0.15.8-1) unstable; urgency=medium
+
+  * Package the DwarFS image inspection and extraction tools.
+
+ -- Uri Herrera <uri_herrera@nxos.org>  Sun, 08 Nov 2026 13:54:12 -0600
